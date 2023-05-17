@@ -1,0 +1,93 @@
+---
+title: "Yapay zeka, Makine Öğrenmesi, Veri Maaşları"
+author: "Halil Görkem Herek"
+output:
+  html_document:
+    theme: darkly
+---
+
+Bu çalışma Shiny framework'ü kullanarak Yapay zeka, Makine Öğrenmesi, Veri Maaşları ile ilgili interaktif web uygulaması oluşturmaktadır. Bu uygulama, çalışma deneyimi, istihdam türü, uzaktan çalışma oranı ve şirket büyüklüğü gibi filtrelerle veri setini filtreleyen ve çeşitli grafikler ve tablolarla sonuçları gösteren bir arayüze sahiptir.
+
+Bu Shiny uygulamasında salaries.csv adlı veri seti kullanılmıştır. Bu veri seti 2020-2023 yılları arasında dünya çapında AI, ML ve Data'daki maaş eğilimlerini göstermektedir.
+Toplamda 11 sütun ve 4134 adet kayıttan oluşmaktadır.
+Sütun anlamları: 
+
+- **work_year :** Maaşın ödendiği yıl
+- **experience_level :** Yıl boyunca işteki deneyim düzeyi
+  + EN : Giriş Seviyesi
+  + MI : Çaylak Orta seviye
+  + SE : Orta seviye Kıdemli seviyesi
+  + EX : Uzman Yönetici düzeyinde / Direktör
+- **employment_type :** Rol için istihdam türü
+  + PT : Yarı zamanlı
+  + FT : Tam zamanlı
+  + CT : Sözleşmeli
+  + FL : Serbest
+- **job_title :** Yıl boyunca çalışılan rol.
+- **salary :** Ödenen toplam brüt maaş tutarı.
+- **salary_currency :** ISO 4217 para birimi kodu olarak ödenen maaşın para birimi.
+- **sallary_in_usd :** USD cinsinden maaş ( fxdata.foorilla.com üzerinden ilgili yıl için döviz kurunun ort. USD kuruna bölümü .
+- **employee__residence :** ISO 3166 ülke kodu olarak çalışanın çalışma yılı boyunca birincil ikamet ettiği ülke
+- **remote_ratio :** Uzaktan yapılan toplam iş miktarı
+  + 0 : Uzaktan çalışma yok (%20'den az)
+  + 50 : Kısmen uzak (Hibrit)
+  + 100 : Tamamen uzak (Remote)(%80'den fazla)
+- **company_location :** ISO 3166 ülke kodu olarak işverenin ana ofisi veya sözleşmeli şubesinin bulunduğu ülke.
+- **company_size :** Yıl boyunca şirket için çalışan ortalama kişi sayısı
+  + S : 50'den az çalışan (küçük)
+  + M : 50 ila 250 çalışan (orta)
+  + L : 250'den fazla çalışan (büyük)
+```{r setup, include=FALSE}
+library(ggplot2)
+library(scales)
+salaries <- read.csv("salaries.csv")
+```
+
+```{r}
+head(salaries)
+```
+ 
+Salaries verisetinin istatistiksel özetine göz atalım:
+
+```{r}
+summary(salaries)
+```
+Histogramda kullanılan çubukların genişliğini veri setimizin dağılımına göre 'binwidth' değerimizi hesaplayalım.
+
+```{r}
+IQR <- quantile(salaries$salary_in_usd, 0.75) - quantile(salaries$salary_in_usd, 0.25)
+n <- length(salaries$salary_in_usd)
+binwidth <- 2 * IQR / (n^(1/3))
+
+```
+
+Çizilen grafik 'salary_in_usd' sütunundaki maaş değerlerinin dağılımını göstermektedir.
+
+```{r}
+ggplot(salaries, aes(x = salary_in_usd)) +
+  geom_histogram(binwidth = 10000, fill = "skyblue", color = "pink") +
+  scale_x_continuous(labels = scales::comma) +
+  labs(title = "Salary Distribution", x = "Salary (USD)", y = "Frequency")
+
+```
+
+Başlıca önde gelen mesleklerin maaş dağılımları
+
+```{r}
+selected_jobs <- c("Data Scientist", "Data Analyst", "Machine Learning Engineer", "AI Developer")
+filtered_data <- subset(salaries, job_title %in% selected_jobs)
+
+ggplot(filtered_data, aes(x = job_title, y = salary_in_usd)) +
+  geom_boxplot(fill = "skyblue", color = "black") +
+  xlab("Meslek") +
+  ylab("Maaş (USD)") +
+  ggtitle("Seçilen Mesleklerin Maaş Dağılımı") +
+  theme_bw() +
+  scale_y_continuous(labels = scales::comma) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+<br><br><br>
+
+## Referanslar:<br>
+
+[Salaries Veri Seti](https://www.kaggle.com/datasets/nguyenthicamlai/ai-ml-data-salaries): Kaggle'dan [NGUYEN THI CAM LAI](https://www.kaggle.com/nguyenthicamlai) adlı kullanıcıdan alınmıştır.
